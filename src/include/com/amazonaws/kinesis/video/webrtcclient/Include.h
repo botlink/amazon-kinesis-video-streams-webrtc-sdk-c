@@ -901,6 +901,14 @@ typedef VOID (*RtcOnOpen)(UINT64, PRtcDataChannel);
 typedef VOID (*RtcOnDataChannel)(UINT64, PRtcDataChannel);
 
 /**
+ * @brief RtcOnDataChannelAck is fired when the remote PeerConnection
+ * has ACKed a new DataChannel we created.
+ *
+ * Reference: https://tools.ietf.org/html/rfc8832#section-5.2
+ */
+typedef VOID (*RtcOnDataChannelAck)(UINT64, PRtcDataChannel);
+
+/**
  * @brief RtcOnIceCandidate is fired when new iceCandidate is found. if PCHAR is NULL then candidate gathering is done.
  *
  * Reference: https://www.w3.org/TR/webrtc/#dom-rtcpeerconnection-ondatachannel
@@ -1755,6 +1763,19 @@ PUBLIC_API STATUS dataChannelOnMessage(PRtcDataChannel, UINT64, RtcOnMessage);
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
 PUBLIC_API STATUS dataChannelOnOpen(PRtcDataChannel, UINT64, RtcOnOpen);
+
+/**
+ * @brief Set a callback for data channel ACK
+ *
+ * Reference: https://tools.ietf.org/html/rfc8832#section-5.2
+ *
+ * @param[in] PRtcDataChannel Data channel struct created by createDataChannel()
+ * @param[in] UINT64 User customData that will be passed along when RtcOnDataChannelAck is called
+ * @param[in] RtcOnDataChannelAck User RtcOnDataChannelAck callback
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success
+ */
+PUBLIC_API STATUS dataChannelOnAck(PRtcDataChannel, UINT64, RtcOnDataChannelAck);
 
 /**
  * @brief Send data via the PRtcDataChannel

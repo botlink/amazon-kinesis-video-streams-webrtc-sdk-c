@@ -300,7 +300,21 @@ STATUS putSctpPacket(PSctpSession pSctpSession, PBYTE buf, UINT32 bufLen)
     return retStatus;
 }
 
-STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
+STATUS handleDcepDataChannelAckPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+
+    CHK(length > 0 && data[0] == DCEP_DATA_CHANNEL_ACK, STATUS_SUCCESS);
+
+    pSctpSession->sctpSessionCallbacks.dataChannelAckFunc(pSctpSession->sctpSessionCallbacks.customData, streamId);
+
+CleanUp:
+    LEAVES();
+    return retStatus;
+}
+
+STATUS handleDcepDataChannelOpenPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
 {
     ENTERS();
     STATUS retStatus = STATUS_SUCCESS;
@@ -316,6 +330,29 @@ STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, 
 
     pSctpSession->sctpSessionCallbacks.dataChannelOpenFunc(pSctpSession->sctpSessionCallbacks.customData, streamId, data + SCTP_DCEP_HEADER_LENGTH,
                                                            labelLength);
+
+CleanUp:
+    LEAVES();
+    return retStatus;
+}
+
+STATUS handleDcepPacket(PSctpSession pSctpSession, UINT32 streamId, PBYTE data, SIZE_T length)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+
+    CHK(length > 0, STATUS_SUCCESS);
+    switch (data[0]) {
+        case DCEP_DATA_CHANNEL_ACK:
+            CHK_STATUS(handleDcepDataChannelAckPacket(pSctpSession, streamId, data, length));
+            break;
+        case DCEP_DATA_CHANNEL_OPEN:
+            CHK_STATUS(handleDcepDataChannelOpenPacket(pSctpSession, streamId, data, length));
+            break;
+        default:
+            DLOGW("Unknown DCEP packet %d", data[0]);
+            break;
+    }
 
 CleanUp:
     LEAVES();

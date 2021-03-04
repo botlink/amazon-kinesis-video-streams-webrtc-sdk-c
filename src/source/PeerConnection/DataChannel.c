@@ -105,3 +105,20 @@ CleanUp:
     LEAVES();
     return retStatus;
 }
+
+STATUS dataChannelOnAck(PRtcDataChannel pRtcDataChannel, UINT64 customData, RtcOnDataChannelAck rtcOnDataChannelAck)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+    PKvsDataChannel pKvsDataChannel = (PKvsDataChannel) pRtcDataChannel;
+
+    CHK(pKvsDataChannel != NULL && rtcOnDataChannelAck != NULL, STATUS_NULL_ARG);
+
+    pKvsDataChannel->onAck = rtcOnDataChannelAck;
+    pKvsDataChannel->onAckCustomData = customData;
+
+CleanUp:
+
+    LEAVES();
+    return retStatus;
+}

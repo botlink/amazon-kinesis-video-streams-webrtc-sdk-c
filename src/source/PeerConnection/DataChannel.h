@@ -24,6 +24,9 @@ typedef struct {
 
     UINT64 onOpenCustomData;
     RtcOnOpen onOpen;
+
+    UINT64 onAckCustomData;
+    RtcOnDataChannelAck onAck;
 } KvsDataChannel, *PKvsDataChannel;
 
 #ifdef __cplusplus

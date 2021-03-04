@@ -77,6 +77,7 @@ STATUS allocateSctp(PKvsPeerConnection pKvsPeerConnection)
 
     // Create the SCTP Session
     sctpSessionCallbacks.outboundPacketFunc = onSctpSessionOutboundPacket;
+    sctpSessionCallbacks.dataChannelAckFunc = onSctpSessionDataChannelAck;
     sctpSessionCallbacks.dataChannelMessageFunc = onSctpSessionDataChannelMessage;
     sctpSessionCallbacks.dataChannelOpenFunc = onSctpSessionDataChannelOpen;
     sctpSessionCallbacks.customData = (UINT64) pKvsPeerConnection;
@@ -483,6 +484,31 @@ VOID onSctpSessionOutboundPacket(UINT64 customData, PBYTE pPacket, UINT32 packet
 CleanUp:
     if (STATUS_FAILED(retStatus)) {
         DLOGW("onSctpSessionOutboundPacket failed with 0x%08x", retStatus);
+    }
+}
+
+VOID onSctpSessionDataChannelAck(UINT64 customData, UINT32 channelId)
+{
+    STATUS retStatus = STATUS_SUCCESS;
+    PKvsPeerConnection pKvsPeerConnection = (PKvsPeerConnection) customData;
+    PKvsDataChannel pKvsDataChannel = NULL;
+    UINT64 hashValue = 0;
+
+    CHK(pKvsPeerConnection != NULL, STATUS_NULL_ARG);
+
+    retStatus = hashTableGet(pKvsPeerConnection->pDataChannels, channelId, &hashValue);
+    pKvsDataChannel = (PKvsDataChannel) hashValue;
+    if (retStatus == STATUS_SUCCESS || retStatus == STATUS_HASH_KEY_NOT_PRESENT) {
+        retStatus = STATUS_SUCCESS;
+    } else {
+        CHK(FALSE, retStatus);
+    }
+    CHK(pKvsDataChannel != NULL && pKvsDataChannel->onAck != NULL, STATUS_INTERNAL_ERROR);
+    pKvsDataChannel->onAck(pKvsDataChannel->onAckCustomData, &pKvsDataChannel->dataChannel);
+
+CleanUp:
+    if (STATUS_FAILED(retStatus)) {
+        DLOGW("onSctpSessionDataChannelAck failed with 0x%08x", retStatus);
     }
 }
 

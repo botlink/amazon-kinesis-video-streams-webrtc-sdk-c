@@ -30,6 +30,7 @@ extern "C" {
 enum { SCTP_PPID_DCEP = 50, SCTP_PPID_STRING = 51, SCTP_PPID_BINARY = 53, SCTP_PPID_STRING_EMPTY = 56, SCTP_PPID_BINARY_EMPTY = 57 };
 
 enum {
+    DCEP_DATA_CHANNEL_ACK = 0x02,
     DCEP_DATA_CHANNEL_OPEN = 0x03,
 };
 
@@ -47,6 +48,10 @@ typedef VOID (*SctpSessionOutboundPacketFunc)(UINT64, PBYTE, UINT32);
 // Argument is ChannelID and ChannelName + Len
 typedef VOID (*SctpSessionDataChannelOpenFunc)(UINT64, UINT32, PBYTE, UINT32);
 
+// Callback that is fired when SCTP has a DataChannel ACK Message.
+// Argument is ChannelID
+typedef VOID (*SctpSessionDataChannelAckFunc)(UINT64, UINT32);
+
 // Callback that is fired when SCTP has a DataChannel Message.
 // Argument is ChannelID and Message + Len
 typedef VOID (*SctpSessionDataChannelMessageFunc)(UINT64, UINT32, BOOL, PBYTE, UINT32);
@@ -55,6 +60,7 @@ typedef struct {
     UINT64 customData;
     SctpSessionOutboundPacketFunc outboundPacketFunc;
     SctpSessionDataChannelOpenFunc dataChannelOpenFunc;
+    SctpSessionDataChannelAckFunc dataChannelAckFunc;
     SctpSessionDataChannelMessageFunc dataChannelMessageFunc;
 } SctpSessionCallbacks, *PSctpSessionCallbacks;
 
