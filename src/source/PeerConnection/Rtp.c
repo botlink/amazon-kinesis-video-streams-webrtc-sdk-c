@@ -120,6 +120,23 @@ CleanUp:
     return retStatus;
 }
 
+STATUS transceiverOnRtpPacket(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnRtpPacket rtcOnRtpPacket)
+{
+    ENTERS();
+    STATUS retStatus = STATUS_SUCCESS;
+    PKvsRtpTransceiver pKvsRtpTransceiver = (PKvsRtpTransceiver) pRtcRtpTransceiver;
+
+    CHK(pKvsRtpTransceiver != NULL && rtcOnRtpPacket != NULL, STATUS_NULL_ARG);
+
+    pKvsRtpTransceiver->onRtpPacket = rtcOnRtpPacket;
+    pKvsRtpTransceiver->onRtpPacketCustomData = customData;
+
+CleanUp:
+
+    LEAVES();
+    return retStatus;
+}
+
 STATUS transceiverOnBandwidthEstimation(PRtcRtpTransceiver pRtcRtpTransceiver, UINT64 customData, RtcOnBandwidthEstimation rtcOnBandwidthEstimation)
 {
     ENTERS();

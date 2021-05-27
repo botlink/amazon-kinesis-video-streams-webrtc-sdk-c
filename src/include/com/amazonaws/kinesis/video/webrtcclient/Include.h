@@ -846,6 +846,14 @@ typedef enum {
  */
 typedef VOID (*RtcOnFrame)(UINT64, PFrame);
 
+/*! \addtogroup Callbacks
+ * @brief RtcOnRtpPacket is fired everytime an RTP packet is received
+ * from the remote peer. It is available via the RtpRec
+ *
+ * @{
+ */
+typedef VOID (*RtcOnRtpPacket)(UINT64, PBYTE, UINT32);
+
 /**
  * @brief RtcOnBandwidthEstimation is fired everytime a bandwidth estimation value
  * is computed. This will be fired for sender or receiver side estimation
@@ -1631,6 +1639,19 @@ PUBLIC_API STATUS addTransceiver(PRtcPeerConnection, PRtcMediaStreamTrack, PRtcR
  * @return STATUS code of the execution. STATUS_SUCCESS on success
  */
 PUBLIC_API STATUS transceiverOnFrame(PRtcRtpTransceiver, UINT64, RtcOnFrame);
+
+/**
+ * @brief Set a callback for transceiver RTP packet
+ *
+ * NOTE: This takes precedence over the RtcOnFrame callback. So calling this disables the RtcOnFrame callback.
+ *
+ * @param[in] PRtcRtpTransceiver Populated RtcRtpTransceiver struct
+ * @param[in] UINT64 User customData that will be passed along when RtcOnRtpPacket is called
+ * @param[in] RtcOnRtpPacket User RtcOnRtpPacket callback
+ *
+ * @return STATUS code of the execution. STATUS_SUCCESS on success
+ */
+PUBLIC_API STATUS transceiverOnRtpPacket(PRtcRtpTransceiver, UINT64, RtcOnRtpPacket);
 
 /**
  * @brief Set a callback for bandwidth estimation results

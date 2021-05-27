@@ -199,31 +199,38 @@ STATUS sendPacketToRtpReceiver(PKvsPeerConnection pKvsPeerConnection, PBYTE pBuf
                 CHK(FALSE, STATUS_SUCCESS);
             }
             now = GETTIME();
-            CHK(NULL != (pPayload = (PBYTE) MEMALLOC(bufferLen)), STATUS_NOT_ENOUGH_MEMORY);
-            MEMCPY(pPayload, pBuffer, bufferLen);
-            CHK_STATUS(createRtpPacketFromBytes(pPayload, bufferLen, &pRtpPacket));
-            pRtpPacket->receivedTime = now;
+            if (pTransceiver->onRtpPacket != NULL) {
+                pTransceiver->onRtpPacket(pTransceiver->onRtpPacketCustomData, pBuffer, bufferLen);
+                lastPacketReceivedTimestamp = KVS_CONVERT_TIMESCALE(now, HUNDREDS_OF_NANOS_IN_A_SECOND, 1000);
+                // TODO(cgrahn): Calculate other stats here as is done in the else clause?
+                CHK(FALSE, STATUS_SUCCESS);
+            } else {
+                CHK(NULL != (pPayload = (PBYTE) MEMALLOC(bufferLen)), STATUS_NOT_ENOUGH_MEMORY);
+                MEMCPY(pPayload, pBuffer, bufferLen);
+                CHK_STATUS(createRtpPacketFromBytes(pPayload, bufferLen, &pRtpPacket));
+                pRtpPacket->receivedTime = now;
 
-            // https://tools.ietf.org/html/rfc3550#section-6.4.1
-            // https://tools.ietf.org/html/rfc3550#appendix-A.8
-            // interarrival jitter
-            // arrival, the current time in the same units.
-            // r_ts, the timestamp from   the incoming packet
-            arrival = KVS_CONVERT_TIMESCALE(now, HUNDREDS_OF_NANOS_IN_A_SECOND, pTransceiver->pJitterBuffer->clockRate);
-            r_ts = pRtpPacket->header.timestamp;
-            transit = arrival - r_ts;
-            delta = transit - pTransceiver->pJitterBuffer->transit;
-            pTransceiver->pJitterBuffer->transit = transit;
-            pTransceiver->pJitterBuffer->jitter += (1. / 16.) * ((DOUBLE) ABS(delta) - pTransceiver->pJitterBuffer->jitter);
-            CHK_STATUS(jitterBufferPush(pTransceiver->pJitterBuffer, pRtpPacket, &discarded));
-            if (discarded) {
-                packetsDiscarded++;
+                // https://tools.ietf.org/html/rfc3550#section-6.4.1
+                // https://tools.ietf.org/html/rfc3550#appendix-A.8
+                // interarrival jitter
+                // arrival, the current time in the same units.
+                // r_ts, the timestamp from   the incoming packet
+                arrival = KVS_CONVERT_TIMESCALE(now, HUNDREDS_OF_NANOS_IN_A_SECOND, pTransceiver->pJitterBuffer->clockRate);
+                r_ts = pRtpPacket->header.timestamp;
+                transit = arrival - r_ts;
+                delta = transit - pTransceiver->pJitterBuffer->transit;
+                pTransceiver->pJitterBuffer->transit = transit;
+                pTransceiver->pJitterBuffer->jitter += (1. / 16.) * ((DOUBLE) ABS(delta) - pTransceiver->pJitterBuffer->jitter);
+                CHK_STATUS(jitterBufferPush(pTransceiver->pJitterBuffer, pRtpPacket, &discarded));
+                if (discarded) {
+                    packetsDiscarded++;
+                }
+                lastPacketReceivedTimestamp = KVS_CONVERT_TIMESCALE(now, HUNDREDS_OF_NANOS_IN_A_SECOND, 1000);
+                headerBytesReceived += RTP_HEADER_LEN(pRtpPacket);
+                bytesReceived += pRtpPacket->rawPacketLength - RTP_HEADER_LEN(pRtpPacket);
+                ownedByJitterBuffer = TRUE;
+                CHK(FALSE, STATUS_SUCCESS);
             }
-            lastPacketReceivedTimestamp = KVS_CONVERT_TIMESCALE(now, HUNDREDS_OF_NANOS_IN_A_SECOND, 1000);
-            headerBytesReceived += RTP_HEADER_LEN(pRtpPacket);
-            bytesReceived += pRtpPacket->rawPacketLength - RTP_HEADER_LEN(pRtpPacket);
-            ownedByJitterBuffer = TRUE;
-            CHK(FALSE, STATUS_SUCCESS);
         }
         pCurNode = pCurNode->pNext;
     }
